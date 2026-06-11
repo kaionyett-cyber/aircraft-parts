@@ -28,7 +28,7 @@
         button.btn { background: var(--secondary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; }
         button.btn:hover { background: #0369a1; }
         .part-card { border: 1px solid #e2e8f0; padding: 1rem; margin-top: 1rem; border-radius: 4px; background: #fafafa; }
-        .status-msg { margin-top: 1rem; padding: 0.75rem; border-radius: 4px; display: none; font-weight: 500; }
+        .status-msg { margin-top: 1rem; padding: 0.75rem; border-radius: 4px; display: none; font-weight: 500; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -36,7 +36,7 @@
 <header>
     <div class="logo">✈️ AeroParts Exchange</div>
     <div class="auth-buttons">
-        <button onclick="alert('User accounts will be handled in the final registration step!')">Login / Register</button>
+        <button onclick="alert('User login system setup follows in the next step!')">Login / Register</button>
     </div>
 </header>
 
@@ -79,8 +79,7 @@
 </div>
 
 <script>
-    // Configured connection details
-    const SUPABASE_URL = "https://keadgwyoldoievortwiu.supabase.co/rest/v1";
+    const SUPABASE_URL = "https://supabase.co";
     const SUPABASE_KEY = "sb_publishable_U3mCMQkf54YAPGGpuk4sJw_MRZuroGy";
 
     function switchTab(tabName) {
@@ -98,7 +97,21 @@
         }
     }
 
-    // Live Upload Function
+    async function sendRequest(tableName, method, body = null, queryParams = "") {
+        const url = `${SUPABASE_URL}/${tableName}${queryParams}`;
+        const options = {
+            method: method,
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': method === 'POST' ? 'return=minimal' : ''
+            }
+        };
+        if (body) options.body = JSON.stringify(body);
+        return await fetch(url, options);
+    }
+
     async function uploadPart() {
         const pn = document.getElementById('up-pn').value.trim();
         const desc = document.getElementById('up-desc').value.trim();
@@ -114,61 +127,57 @@
         statusDiv.style.display = 'block';
         statusDiv.style.background = '#e0f2fe';
         statusDiv.style.color = '#0369a1';
-        statusDiv.innerText = "Uploading to database...";
+        statusDiv.innerText = "Connecting to cloud data server...";
+
+        const payload = { part_number: pn, description: desc, condition: cond, quantity: qty };
 
         try {
-           const response = await fetch(`${SUPABASE_URL}/Parts`, {
- method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify({
-                    part_number: pn,
-                    description: desc,
-                    condition: cond,
-                    quantity: qty
-                })
-            });
+            // Strategy: Try capitalized 'Parts' table first, fall back to lowercase 'parts' if it fails
+            let response = await sendRequest('Parts', 'POST', payload);
+            
+            if (!response.ok) {
+                response = await sendRequest('parts', 'POST', payload);
+            }
 
             if (response.ok) {
                 statusDiv.style.background = '#dcfce7';
                 statusDiv.style.color = '#15803d';
-                statusDiv.innerText = "Success! Part successfully added to inventory.";
+                statusDiv.innerText = "Success! Part successfully saved to your database.";
                 document.getElementById('up-pn').value = '';
                 document.getElementById('up-desc').value = '';
             } else {
-                throw new Error('Failed response');
+                const errText = await response.text();
+                throw new Error(errText || `Server responded with code ${response.status}`);
             }
         } catch (error) {
             statusDiv.style.background = '#fee2e2';
             statusDiv.style.color = '#b91c1c';
-            statusDiv.innerText = "Error saving part. Double-check table settings.";
+            statusDiv.innerText = `Database Error Connection Failed:\n${error.message}\n\nTip: Double-check your column spellings inside Supabase Table Editor.`;
         }
     }
 
-    // Live Search Function
     async function searchParts() {
         const query = document.getElementById('search-pn').value.trim();
-     const response = await fetch(`${SUPABASE_URL}/Parts?part_number=ilike.*${encodeURIComponent(query)}*`, {
-
+        const resultsDiv = document.getElementById('search-results');
+        
         if(!query) {
             alert('Please enter a part number to search.');
             return;
         }
 
-        resultsDiv.innerHTML = "<p style='color:#64748b;'>Searching global stock...</p>";
+        resultsDiv.innerHTML = "<p style='color:#64748b;'>Searching global database...</p>";
+        const queryParams = `?part_number=ilike.*${encodeURIComponent(query)}*`;
 
         try {
-            const response = await fetch(`${SUPABASE_URL}/parts?part_number=ilike.*${encodeURIComponent(query)}*`, {
-                method: 'GET',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`
-                }
-            });
+            let response = await sendRequest('Parts', 'GET', null, queryParams);
+            if (!response.ok) {
+                response = await sendRequest('parts', 'GET', null, queryParams);
+            }
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText);
+            }
 
             const data = await response.json();
             resultsDiv.innerHTML = "";
@@ -182,14 +191,14 @@
                 const card = document.createElement('div');
                 card.className = 'part-card';
                 card.innerHTML = `
-                    <h4>${item.description}</h4>
-                    <p style="font-size: 0.9rem; color: #64748b;">P/N: ${item.part_number} | Condition: ${item.condition}</p>
-                    <p style="margin-top: 0.5rem; font-weight: bold; color: var(--primary);">Qty Available: ${item.quantity}</p>
+                    <h4>${item.description || 'No Description'}</h4>
+                    <p style="font-size: 0.9rem; color: #64748b;">P/N: ${item.part_number || 'N/A'} | Condition: ${item.condition || 'N/A'}</p>
+                    <p style="margin-top: 0.5rem; font-weight: bold; color: var(--primary);">Qty Available: ${item.quantity ?? 0}</p>
                 `;
                 resultsDiv.appendChild(card);
             });
         } catch (error) {
-            resultsDiv.innerHTML = "<p style='color:#b91c1c;'>Error pulling data from server.</p>";
+            resultsDiv.innerHTML = `<p style='color:#b91c1c;'>Search failure: ${error.message}</p>`;
         }
     }
 </script>
