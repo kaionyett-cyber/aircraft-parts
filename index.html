@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroParts Exchange</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #0284c7;
+            --dark: #0f172a;
+            --light: #f8fafc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--light); color: var(--dark); }
+        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: bold; font-size: 1.5rem; }
+        .auth-buttons button { background: transparent; border: 1px solid white; color: white; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; margin-left: 0.5rem; }
+        .auth-buttons button.active { background: white; color: var(--primary); }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .tabs { display: flex; margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; }
+        .tab { padding: 1rem 2rem; cursor: pointer; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .tab.active { border-bottom-color: var(--secondary); color: var(--secondary); }
+        .panel { display: none; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .panel.active { display: block; }
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        input, select { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem; }
+        button.btn { background: var(--secondary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; }
+        button.btn:hover { background: #0369a1; }
+        .part-card { border: 1px solid #e2e8f0; padding: 1rem; margin-top: 1rem; border-radius: 4px; background: #fafafa; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">✈️ AeroParts Exchange</div>
+    <div class="auth-buttons">
+        <button onclick="alert('Login feature coming up in the next steps!')">Login</button>
+        <button class="active" onclick="alert('Registration coming up in the next steps!')">Sign Up</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('search')">🔍 Search Parts (Buyer)</div>
+        <div class="tab" onclick="switchTab('upload')">📦 Upload Inventory (Seller)</div>
+    </div>
+
+    <!-- SEARCH PANEL -->
+    <div id="search-panel" class="panel active">
+        <h2>Find Aircraft Components</h2>
+        <p style="margin-bottom: 1.5rem; color: #64748b;">Search the global database by part number or keyword.</p>
+        <div class="form-group" style="display: flex; gap: 0.5rem;">
+            <input type="text" placeholder="Enter Part Number (e.g., 45-0123-1)...">
+            <button class="btn" onclick="alert('Search feature will be linked to the free database in the next steps!')">Search</button>
+        </div>
+        <div class="part-card">
+            <h4>Example Result: Boeing 737 Flap Actuator</h4>
+            <p style="font-size: 0.9rem; color: #64748b;">P/N: 65B40111-12 | Condition: Overhauled</p>
+            <p style="margin-top: 0.5rem; font-weight: bold; color: var(--primary);">Qty Available: 2</p>
+        </div>
+    </div>
+
+    <!-- UPLOAD PANEL -->
+    <div id="upload-panel" class="panel">
+        <h2>List Your Stock</h2>
+        <p style="margin-bottom: 1.5rem; color: #64748b;">Upload your current available inventory to our central system.</p>
+        <div class="form-group">
+            <label>Part Number (P/N)</label>
+            <input type="text" placeholder="e.g., 10-60528-5">
+        </div>
+        <div class="form-group">
+            <label>Description / Name</label>
+            <input type="text" placeholder="e.g., Alticorder Indicator">
+        </div>
+        <div class="form-group">
+            <label>Condition</label>
+            <select>
+                <option>New Surplus (NS)</option>
+                <option>Overhauled (OH)</option>
+                <option>Serviceable (SV)</option>
+                <option>As-Is / Repairable (AR)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Quantity</label>
+            <input type="number" min="1" value="1">
+        </div>
+        <button class="btn" onclick="alert('Inventory submission will save to the free database in the next steps!')">Add to Stock</button>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        
+        if(tabName === 'search') {
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.getElementById('search-panel').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            document.getElementById('upload-panel').classList.add('active');
+        }
+    }
+</script>
+</body>
+</html>
